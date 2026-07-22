@@ -232,7 +232,7 @@ def get_quadrant_strategy(cap, read, cap_med=0.5, read_med=0.5):
 # ==============================================================================
 st.markdown(f"""
 <div class="header-container">
-    <h1>🇻🇳 DASHBOARD 3: Vietnam AI Transformation Simulation</h1>
+    <h1> Vietnam AI Transformation Simulation</h1>
     <p><i>"Nếu năng lực công nghệ, con người và thể chế của Việt Nam thay đổi trong tương lai, chiến lược AI của doanh nghiệp sẽ thay đổi như thế nào?"</i></p>
 </div>
 """, unsafe_allow_html=True)
@@ -273,30 +273,267 @@ ir_val = st.sidebar.slider("Chỉ số IR", 0.0, 1.0, default_ir, 0.05, key="ir_
 # ==============================================================================
 # CALCULATE SCENARIO DATA (ÁP DỤNG CÔNG THỨC MÔ PHỎNG VIỆT NAM + FIX NAN)
 # ==============================================================================
+# ==============================================================================
+# SCENARIO SIMULATION ENGINE V2
+# AI Workforce Transformation Decision Support Model
+# ==============================================================================
+
+
+def simulate_ai_capability(base_cap, technology, institution):
+    """
+    Technology + Institution readiness amplify AI deployment capability.
+    
+    Formula:
+    - Minimum capability floor: 50%
+    - Maximum improvement: 50%
+    
+    Avoid capability collapse in low readiness scenarios.
+    """
+
+    readiness_factor = 0.5 + 0.5 * technology * institution
+    
+    return (base_cap * readiness_factor).clip(0, 1)
+
+
+
+def simulate_worker_readiness(base_read, people):
+    """
+    Workforce readiness simulation.
+
+    Higher AI literacy and acceptance increase adoption readiness.
+    """
+
+    readiness_factor = 0.6 + 0.4 * people
+
+    return (base_read * readiness_factor).clip(0, 1)
+
+
+
+def calculate_ai_investment_priority(row):
+    """
+    AI Investment Priority Score
+
+    Business logic:
+    - AI capability
+    - Worker readiness
+    - Economic importance
+
+    Higher score = invest earlier
+    """
+
+    return (
+        0.4 * row["Cap_VN"] +
+        0.3 * row["Read_VN"] +
+        0.3 * row["EcoExp_VN"]
+    )
+
+
+
+def recommend_strategy(row):
+    """
+    Workforce Transformation Strategy Engine
+    """
+
+    cap = row["Cap_VN"]
+    read = row["Read_VN"]
+    priority = row["AIPS_VN"]
+
+
+    # High AI potential + high readiness
+    if cap >= 0.65 and read >= 0.60:
+        return "Deploy AI"
+
+
+    # AI useful but workforce not ready
+    elif cap >= 0.65 and read < 0.60:
+        return "Reskill Workforce"
+
+
+    # Business value but technology immature
+    elif cap < 0.65 and priority >= 0.45:
+        return "Improve AI Capability"
+
+
+    # Low transformation opportunity
+    else:
+        return "Human-Centric Role"
+
+
+
+def workforce_transition(row):
+
+    before = row["Strategy_Before"]
+    after = row["Strategy_After"]
+
+
+    if before == after:
+        return "Stable"
+
+
+    elif after == "Deploy AI":
+        return "AI Adoption Opportunity"
+
+
+    elif after == "Reskill Workforce":
+        return "Skill Transformation Required"
+
+
+    elif after == "Human-Centric Role":
+        return "Human Expertise Preserved"
+
+
+    else:
+        return "Technology Investment Needed"
+
+
+
+# ==============================================================================
+# APPLY SCENARIO MODEL
+# ==============================================================================
+
+
 df_scenario = df_raw.copy()
 
-# Công thức điều chỉnh Việt Nam
-df_scenario["Cap_VN"] = (df_scenario["Cap_base"] * tr_val * ir_val).fillna(0)
-df_scenario["Read_VN"] = (df_scenario["Read_base"] * pr_val).fillna(0)
 
-df_scenario["WEI_VN"] = (df_scenario["Employment_norm"] * df_scenario["Cap_VN"]).fillna(0)
-df_scenario["PEI_VN"] = (df_scenario["Wage_norm"] * df_scenario["Cap_VN"]).fillna(0)
-df_scenario["CI_VN"] = (df_scenario["Importance_o_norm"] * df_scenario["Cap_VN"]).fillna(0)
+# -------------------------------
+# 1. AI Capability Simulation
+# -------------------------------
 
-# Tính EcoExp_VN và triệt tiêu NaN hoàn toàn
-df_scenario["EcoExp_VN"] = ((df_scenario["WEI_VN"] + df_scenario["PEI_VN"] + df_scenario["CI_VN"]) / 3).fillna(0)
-# Thêm ngưỡng tối thiểu để tránh kích thước marker = 0 trong Plotly Scatter
-df_scenario["EcoExp_VN_plot"] = df_scenario["EcoExp_VN"].apply(lambda x: max(x, 0.01))
-df_scenario["EcoExp_base_plot"] = df_scenario["EcoExp_base"].apply(lambda x: max(x, 0.01))
-
-df_scenario["AIPS_VN"] = (df_scenario["Cap_VN"] * df_scenario["Read_VN"] * df_scenario["EcoExp_VN"]).fillna(0)
-
-# Phân loại chiến lược Trước & Sau
-df_scenario["Strategy_Before"] = df_scenario.apply(
-    lambda r: get_quadrant_strategy(r["Cap_base"], r["Read_base"]), axis=1
+df_scenario["Cap_VN"] = simulate_ai_capability(
+    df_scenario["Cap_base"],
+    tr_val,
+    ir_val
 )
+
+
+# -------------------------------
+# 2. Workforce Readiness Simulation
+# -------------------------------
+
+df_scenario["Read_VN"] = simulate_worker_readiness(
+    df_scenario["Read_base"],
+    pr_val
+)
+
+
+
+# -------------------------------
+# 3. Economic Impact
+# -------------------------------
+
+df_scenario["WEI_VN"] = (
+    df_scenario["Employment_norm"] *
+    df_scenario["Cap_VN"]
+)
+
+
+df_scenario["PEI_VN"] = (
+    df_scenario["Wage_norm"] *
+    df_scenario["Cap_VN"]
+)
+
+
+df_scenario["CI_VN"] = (
+    df_scenario["Importance_o_norm"] *
+    df_scenario["Cap_VN"]
+)
+
+
+
+df_scenario["EcoExp_VN"] = (
+    df_scenario[
+        [
+            "WEI_VN",
+            "PEI_VN",
+            "CI_VN"
+        ]
+    ].mean(axis=1)
+)
+
+
+
+# -------------------------------
+# 4. AI Investment Priority Score
+# -------------------------------
+
+df_scenario["AIPS_VN"] = df_scenario.apply(
+    calculate_ai_investment_priority,
+    axis=1
+)
+
+
+
+# -------------------------------
+# 5. Strategy Classification
+# -------------------------------
+
+
+df_scenario["Strategy_Before"] = df_scenario.apply(
+    lambda r:
+    get_quadrant_strategy(
+        r["Cap_base"],
+        r["Read_base"]
+    ),
+    axis=1
+)
+
+
+
 df_scenario["Strategy_After"] = df_scenario.apply(
-    lambda r: get_quadrant_strategy(r["Cap_VN"], r["Read_VN"], cap_med=0.5*tr_val*ir_val, read_med=0.5*pr_val), axis=1
+    recommend_strategy,
+    axis=1
+)
+
+
+
+# -------------------------------
+# 6. Workforce Transition
+# -------------------------------
+
+
+df_scenario["Transformation_Status"] = df_scenario.apply(
+    workforce_transition,
+    axis=1
+)
+
+
+
+# -------------------------------
+# 7. Visualization Helper
+# -------------------------------
+
+df_scenario["EcoExp_VN_plot"] = (
+    df_scenario["EcoExp_VN"]
+    .clip(lower=0.01)
+)
+
+
+# Ranking
+df_rank = (
+    df_scenario
+    .sort_values(
+        "AIPS_VN",
+        ascending=False
+    )
+    .reset_index(drop=True)
+)
+
+
+
+# Top investment opportunities
+
+top_ai_jobs = df_rank.head(5)[
+    [
+        "Occupation",
+        "Industry Group",
+        "AIPS_VN",
+        "Strategy_After"
+    ]
+]
+# Visualization helper for baseline chart
+df_scenario["EcoExp_base_plot"] = (
+    df_scenario["EcoExp_base"]
+    .clip(lower=0.01)
 )
 
 # ==============================================================================
