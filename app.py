@@ -116,7 +116,7 @@ df_lookup = load_quick_lookup_data()
 # 4. NAVIGATION SIDEBAR
 # ==============================================================================
 try:
-    st.sidebar.image(r"C:\Users\HP\Downloads\images.png", use_container_width=True)
+    st.sidebar.image("data/images.png", use_container_width=True)
 except:
     st.sidebar.markdown(f"<h2 style='color:{C_MAIN_BLUE}; text-align:center;'>HUB LOGO</h2>", unsafe_allow_html=True)
 
