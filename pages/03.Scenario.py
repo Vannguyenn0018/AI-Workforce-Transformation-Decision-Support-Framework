@@ -133,86 +133,38 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-# ==============================================================================
-# 3. TẢI VÀ TÍNH TOÁN DỮ LIỆU CƠ SỞ (BASE DATASET)
-# ==============================================================================
-def min_max_normalize(series):
-    s_min, s_max = series.min(skipna=True), series.max(skipna=True)
-    if pd.isna(s_min) or pd.isna(s_max) or s_max == s_min:
-        return series * 0
-    return (series - s_min) / (s_max - s_min)
 
+# ==============================================================================
+# 3. TẢI DỮ LIỆU ĐÃ XỬ LÝ (SINGLE CONSOLIDATED FILE)
+# ==============================================================================
 @st.cache_data
 def load_base_data():
-    try:
-        task_meta = pd.read_csv(r"C:\Users\HP\Downloads\master_data_task_level.csv")
-        expert_cap = pd.read_csv(r"C:\Users\HP\Downloads\master_data_expert_ratings.csv")
-        worker_desire = pd.read_csv(r"C:\Users\HP\Downloads\master_data_worker_desire.csv")
-    except Exception:
-        # Dữ liệu giả lập dự phòng nếu chưa có file csv
-        np.random.seed(42)
-        occs = [
-            ("43-4051.00", "Customer Service Representatives", "Customer Service", 0.95, 0.55),
-            ("13-2011.00", "Accountants and Auditors", "Finance & Accounting", 0.85, 0.78),
-            ("13-2051.00", "Financial Analysts", "Finance & Accounting", 0.88, 0.82),
-            ("13-1071.00", "Human Resources Specialists", "Human Resources", 0.75, 0.65),
-            ("15-1252.00", "Software Developers", "Information Technology", 0.92, 0.89),
-            ("11-1021.00", "General Managers", "Management", 0.58, 0.91),
-            ("41-2031.00", "Retail Salespersons", "Sales & Retail", 0.62, 0.35),
-            ("29-1141.00", "Registered Nurses", "Healthcare", 0.31, 0.94),
-            ("43-3031.00", "Bookkeeping & Auditing Clerks", "Finance & Accounting", 0.89, 0.45),
-            ("15-1211.00", "Computer Systems Analysts", "Information Technology", 0.81, 0.72)
-        ]
-        task_rows, expert_rows, worker_rows = [], [], []
-        tid = 1
-        for soc, title, ind, emp, wage in occs:
-            for _ in range(6):
-                t_str = f"TASK-{tid}"
-                tid += 1
-                task_rows.append({"O*NET-SOC Code": soc, "Occupation (O*NET-SOC Title)": title, "Industry Group": ind, "Employment_norm": emp, "Wage_norm": wage, "Task ID": t_str, "Importance": np.random.uniform(2, 5), "Importance_norm": np.random.uniform(0.3, 0.9)})
-                expert_rows.append({"Task ID": t_str, "Automation Capacity Rating": np.random.uniform(1.5, 4.8)})
-                worker_rows.append({"Task ID": t_str, "Automation Desire Rating": np.random.uniform(1.2, 4.5)})
-        task_meta, expert_cap, worker_desire = pd.DataFrame(task_rows), pd.DataFrame(expert_rows), pd.DataFrame(worker_rows)
-
-    task_cap = expert_cap.groupby("Task ID")["Automation Capacity Rating"].mean().reset_index(name="Cap_t")
-    task_read = worker_desire.groupby("Task ID")["Automation Desire Rating"].mean().reset_index(name="Read_t")
-    task_summary = task_meta.merge(task_cap, on="Task ID", how="left").merge(task_read, on="Task ID", how="left")
-
-    def aggregate_occ(df_occ):
-        v_cap = df_occ.dropna(subset=["Cap_t", "Importance"])
-        v_read = df_occ.dropna(subset=["Read_t", "Importance"])
-        v_imp = df_occ.dropna(subset=["Importance_norm"])
-        
-        Cap_o = np.average(v_cap["Cap_t"], weights=v_cap["Importance"]) if len(v_cap) > 0 else np.nan
-        Read_o = np.average(v_read["Read_t"], weights=v_read["Importance"]) if len(v_read) > 0 else np.nan
-        Imp_o = v_imp["Importance_norm"].mean() if len(v_imp) > 0 else np.nan
-
-        return pd.Series({
-            "Cap_o": Cap_o,
-            "Read_o": Read_o,
-            "Importance_o_norm": Imp_o
-        })
-
-    occ_df = task_summary.groupby([
-        "O*NET-SOC Code", "Occupation (O*NET-SOC Title)",
-        "Employment_norm", "Wage_norm", "Industry Group"
-    ]).apply(aggregate_occ, include_groups=False).reset_index()
-
-    occ_df.rename(columns={"Occupation (O*NET-SOC Title)": "Occupation"}, inplace=True)
-
-    # Chuẩn hóa ban đầu (Global Baseline)
-    occ_df["Cap_base"] = min_max_normalize(occ_df["Cap_o"]).fillna(0)
-    occ_df["Read_base"] = min_max_normalize(occ_df["Read_o"]).fillna(0)
+    # Đọc file dữ liệu đã hợp nhất của bạn
+    df = pd.read_csv(r"C:\Users\HP\Downloads\final_consolidated_output (1).csv")
     
-    # Tính các chỉ số cơ sở và làm sạch NaN
-    occ_df["WEI_base"] = (occ_df["Employment_norm"] * occ_df["Cap_base"]).fillna(0)
-    occ_df["PEI_base"] = (occ_df["Wage_norm"] * occ_df["Cap_base"]).fillna(0)
-    occ_df["CI_base"] = (occ_df["Importance_o_norm"] * occ_df["Cap_base"]).fillna(0)
+    # Đổi tên các cột tương ứng với logic Simulation Engine bên dưới
+    df = df.rename(columns={
+        "Occupation (O*NET-SOC Title)": "Occupation",
+        "Cap_norm": "Cap_base",
+        "Read_norm": "Read_base",
+        "EE": "EcoExp_base",
+        "WEI_normalized": "WEI_base",
+        "PEI_normalized": "PEI_base",
+        "CI_normalized": "CI_base"
+    })
     
-    occ_df["EcoExp_base"] = ((occ_df["WEI_base"] + occ_df["PEI_base"] + occ_df["CI_base"]) / 3).fillna(0)
-    occ_df["AIPS_base"] = (occ_df["Cap_base"] * occ_df["Read_base"] * occ_df["EcoExp_base"]).fillna(0)
+    # Trích xuất ngược (reverse-engineer) các thông số employment_norm, wage_norm, importance_o_norm 
+    # từ dữ liệu đã chuẩn hóa để tiếp tục dùng được cho các biến số thay đổi (Sliders).
+    # Công thức gốc: WEI_base = Employment_norm * Cap_base -> Employment_norm = WEI_base / Cap_base
+    df["Employment_norm"] = np.where(df["Cap_base"] > 0, df["WEI_base"] / df["Cap_base"], 0)
+    df["Wage_norm"] = np.where(df["Cap_base"] > 0, df["PEI_base"] / df["Cap_base"], 0)
+    df["Importance_o_norm"] = np.where(df["Cap_base"] > 0, df["CI_base"] / df["Cap_base"], 0)
 
-    return occ_df
+    # Đảm bảo EcoExp_base không bị NA
+    df["EcoExp_base"] = df["EcoExp_base"].fillna(0)
+    df["AIPS_base"] = (df["Cap_base"] * df["Read_base"] * df["EcoExp_base"]).fillna(0)
+
+    return df
 
 df_raw = load_base_data()
 
@@ -270,271 +222,90 @@ st.sidebar.markdown("### 3. Institutional Readiness (IR)")
 st.sidebar.caption("Khung pháp lý, Quản trị dữ liệu & Bảo mật thông tin")
 ir_val = st.sidebar.slider("Chỉ số IR", 0.0, 1.0, default_ir, 0.05, key="ir_slider")
 
-# ==============================================================================
-# CALCULATE SCENARIO DATA (ÁP DỤNG CÔNG THỨC MÔ PHỎNG VIỆT NAM + FIX NAN)
-# ==============================================================================
+
 # ==============================================================================
 # SCENARIO SIMULATION ENGINE V2
 # AI Workforce Transformation Decision Support Model
 # ==============================================================================
 
-
 def simulate_ai_capability(base_cap, technology, institution):
-    """
-    Technology + Institution readiness amplify AI deployment capability.
-    
-    Formula:
-    - Minimum capability floor: 50%
-    - Maximum improvement: 50%
-    
-    Avoid capability collapse in low readiness scenarios.
-    """
-
     readiness_factor = 0.5 + 0.5 * technology * institution
-    
     return (base_cap * readiness_factor).clip(0, 1)
 
-
-
 def simulate_worker_readiness(base_read, people):
-    """
-    Workforce readiness simulation.
-
-    Higher AI literacy and acceptance increase adoption readiness.
-    """
-
     readiness_factor = 0.6 + 0.4 * people
-
     return (base_read * readiness_factor).clip(0, 1)
 
-
-
 def calculate_ai_investment_priority(row):
-    """
-    AI Investment Priority Score
-
-    Business logic:
-    - AI capability
-    - Worker readiness
-    - Economic importance
-
-    Higher score = invest earlier
-    """
-
     return (
         0.4 * row["Cap_VN"] +
         0.3 * row["Read_VN"] +
         0.3 * row["EcoExp_VN"]
     )
 
-
-
 def recommend_strategy(row):
-    """
-    Workforce Transformation Strategy Engine
-    """
-
     cap = row["Cap_VN"]
     read = row["Read_VN"]
     priority = row["AIPS_VN"]
 
-
-    # High AI potential + high readiness
     if cap >= 0.65 and read >= 0.60:
         return "Deploy AI"
-
-
-    # AI useful but workforce not ready
     elif cap >= 0.65 and read < 0.60:
         return "Reskill Workforce"
-
-
-    # Business value but technology immature
     elif cap < 0.65 and priority >= 0.45:
         return "Improve AI Capability"
-
-
-    # Low transformation opportunity
     else:
         return "Human-Centric Role"
 
-
-
 def workforce_transition(row):
-
     before = row["Strategy_Before"]
     after = row["Strategy_After"]
 
-
     if before == after:
         return "Stable"
-
-
     elif after == "Deploy AI":
         return "AI Adoption Opportunity"
-
-
     elif after == "Reskill Workforce":
         return "Skill Transformation Required"
-
-
     elif after == "Human-Centric Role":
         return "Human Expertise Preserved"
-
-
     else:
         return "Technology Investment Needed"
-
-
 
 # ==============================================================================
 # APPLY SCENARIO MODEL
 # ==============================================================================
-
-
 df_scenario = df_raw.copy()
 
-
-# -------------------------------
 # 1. AI Capability Simulation
-# -------------------------------
+df_scenario["Cap_VN"] = simulate_ai_capability(df_scenario["Cap_base"], tr_val, ir_val)
 
-df_scenario["Cap_VN"] = simulate_ai_capability(
-    df_scenario["Cap_base"],
-    tr_val,
-    ir_val
-)
-
-
-# -------------------------------
 # 2. Workforce Readiness Simulation
-# -------------------------------
+df_scenario["Read_VN"] = simulate_worker_readiness(df_scenario["Read_base"], pr_val)
 
-df_scenario["Read_VN"] = simulate_worker_readiness(
-    df_scenario["Read_base"],
-    pr_val
-)
-
-
-
-# -------------------------------
 # 3. Economic Impact
-# -------------------------------
+df_scenario["WEI_VN"] = df_scenario["Employment_norm"] * df_scenario["Cap_VN"]
+df_scenario["PEI_VN"] = df_scenario["Wage_norm"] * df_scenario["Cap_VN"]
+df_scenario["CI_VN"] = df_scenario["Importance_o_norm"] * df_scenario["Cap_VN"]
+df_scenario["EcoExp_VN"] = df_scenario[["WEI_VN", "PEI_VN", "CI_VN"]].mean(axis=1)
 
-df_scenario["WEI_VN"] = (
-    df_scenario["Employment_norm"] *
-    df_scenario["Cap_VN"]
-)
-
-
-df_scenario["PEI_VN"] = (
-    df_scenario["Wage_norm"] *
-    df_scenario["Cap_VN"]
-)
-
-
-df_scenario["CI_VN"] = (
-    df_scenario["Importance_o_norm"] *
-    df_scenario["Cap_VN"]
-)
-
-
-
-df_scenario["EcoExp_VN"] = (
-    df_scenario[
-        [
-            "WEI_VN",
-            "PEI_VN",
-            "CI_VN"
-        ]
-    ].mean(axis=1)
-)
-
-
-
-# -------------------------------
 # 4. AI Investment Priority Score
-# -------------------------------
+df_scenario["AIPS_VN"] = df_scenario.apply(calculate_ai_investment_priority, axis=1)
 
-df_scenario["AIPS_VN"] = df_scenario.apply(
-    calculate_ai_investment_priority,
-    axis=1
-)
-
-
-
-# -------------------------------
 # 5. Strategy Classification
-# -------------------------------
+df_scenario["Strategy_Before"] = df_scenario.apply(lambda r: get_quadrant_strategy(r["Cap_base"], r["Read_base"]), axis=1)
+df_scenario["Strategy_After"] = df_scenario.apply(recommend_strategy, axis=1)
 
-
-df_scenario["Strategy_Before"] = df_scenario.apply(
-    lambda r:
-    get_quadrant_strategy(
-        r["Cap_base"],
-        r["Read_base"]
-    ),
-    axis=1
-)
-
-
-
-df_scenario["Strategy_After"] = df_scenario.apply(
-    recommend_strategy,
-    axis=1
-)
-
-
-
-# -------------------------------
 # 6. Workforce Transition
-# -------------------------------
+df_scenario["Transformation_Status"] = df_scenario.apply(workforce_transition, axis=1)
 
-
-df_scenario["Transformation_Status"] = df_scenario.apply(
-    workforce_transition,
-    axis=1
-)
-
-
-
-# -------------------------------
 # 7. Visualization Helper
-# -------------------------------
-
-df_scenario["EcoExp_VN_plot"] = (
-    df_scenario["EcoExp_VN"]
-    .clip(lower=0.01)
-)
-
+df_scenario["EcoExp_VN_plot"] = df_scenario["EcoExp_VN"].clip(lower=0.01)
+df_scenario["EcoExp_base_plot"] = df_scenario["EcoExp_base"].clip(lower=0.01)
 
 # Ranking
-df_rank = (
-    df_scenario
-    .sort_values(
-        "AIPS_VN",
-        ascending=False
-    )
-    .reset_index(drop=True)
-)
-
-
-
-# Top investment opportunities
-
-top_ai_jobs = df_rank.head(5)[
-    [
-        "Occupation",
-        "Industry Group",
-        "AIPS_VN",
-        "Strategy_After"
-    ]
-]
-# Visualization helper for baseline chart
-df_scenario["EcoExp_base_plot"] = (
-    df_scenario["EcoExp_base"]
-    .clip(lower=0.01)
-)
+df_rank = df_scenario.sort_values("AIPS_VN", ascending=False).reset_index(drop=True)
+top_ai_jobs = df_rank.head(5)[["Occupation", "Industry Group", "AIPS_VN", "Strategy_After"]]
 
 # ==============================================================================
 # OVERVIEW CARDS (KPI DASHBOARD)
@@ -596,7 +367,7 @@ with col_fig1:
         y="Cap_base",
         color="Strategy_Before",
         hover_name="Occupation",
-        size="EcoExp_base_plot",  # Đã triệt tiêu hoàn toàn NaN
+        size="EcoExp_base_plot",
         size_max=30,
         title="<b>BASELINE (Toàn Cầu / Hiện Tại)</b>",
         labels={"Read_base": "Worker Readiness", "Cap_base": "AI Capability"},
@@ -619,7 +390,7 @@ with col_fig2:
         y="Cap_VN",
         color="Strategy_After",
         hover_name="Occupation",
-        size="EcoExp_VN_plot",    # Đã triệt tiêu hoàn toàn NaN
+        size="EcoExp_VN_plot",
         size_max=30,
         title=f"<b>VIETNAM SIMULATION (TR={tr_val}, PR={pr_val}, IR={ir_val})</b>",
         labels={"Read_VN": "Readiness (VN)", "Cap_VN": "Capability (VN)"},
@@ -671,7 +442,6 @@ with col_v2:
 with col_v3:
     st.subheader("3. So Sánh 3 Kịch Bản Lớn (Scenario Comparison)")
     
-    # Mô phỏng tính toán nhanh cho 3 kịch bản lớn
     scenarios_summary = [
         {"Kịch Bản": "Conservative", "Deploy AI": len(df_raw[(df_raw["Cap_base"]*0.5*0.5 >= 0.125) & (df_raw["Read_base"]*0.45 >= 0.1125)])},
         {"Kịch Bản": "Expected", "Deploy AI": len(df_raw[(df_raw["Cap_base"]*0.75*0.65 >= 0.125) & (df_raw["Read_base"]*0.70 >= 0.1125)])},
@@ -710,7 +480,6 @@ df_shift_detail["Trạng Thái Dịch Chuyển"] = np.where(
 
 changed_jobs = df_shift_detail[df_shift_detail["Trạng Thái Dịch Chuyển"] == "🔄 Có Dịch Chuyển"]
 
-# Hàm tương thích cho cả Pandas cũ và mới
 styler = df_shift_detail.style.format({
     "Cap_base": "{:.2f}",
     "Cap_VN": "{:.2f}",
@@ -719,7 +488,6 @@ styler = df_shift_detail.style.format({
     "AIPS_VN": "{:.3f}"
 })
 
-# Dùng .map() thay cho .applymap()
 if hasattr(styler, "map"):
     styler = styler.map(
         lambda v: 'background-color: #E8F5E9; font-weight: bold;' if v == '🔄 Có Dịch Chuyển' else '', 
