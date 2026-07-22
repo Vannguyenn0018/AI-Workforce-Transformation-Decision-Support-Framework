@@ -6,15 +6,15 @@ import numpy as np
 # 1. CẤU HÌNH TRANG CHÍNH & BRAND PALETTE
 # ==============================================================================
 st.set_page_config(
-    page_title="AI Transformation Strategy Platform",
+    page_title="Nền tảng Chiến lược Chuyển đổi AI",
     page_icon="🚀",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # Brand Color Palette
-C_DARK_BLUE = "#293681"
-C_MAIN_BLUE = "#4274D9"
+C_DARK_BLUE  = "#293681"
+C_MAIN_BLUE  = "#4274D9"
 C_LIGHT_BLUE = "#95CCDD"
 C_TEAL_BG    = "#D0E7E6"
 C_WHITE      = "#FFFFFF"
@@ -43,8 +43,8 @@ st.markdown(f"""
     .sec-subtitle {{ font-size: 16px; color: {C_TEXT_DARK}; opacity: 0.7; font-weight: 500; margin-bottom: 25px; }}
 
     /* 2. Strategic Challenge */
-    .challenge-grid {{ display: flex; gap: 20px; margin-bottom: 40px; }}
-    .c-card {{ flex: 1; background: {C_WHITE}; border-top: 4px solid; border-radius: 12px; padding: 25px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); transition: transform 0.3s; }}
+    .challenge-grid {{ display: flex; gap: 20px; margin-bottom: 40px; flex-wrap: wrap; }}
+    .c-card {{ flex: 1; min-width: 250px; background: {C_WHITE}; border-top: 4px solid; border-radius: 12px; padding: 25px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); transition: transform 0.3s; }}
     .c-card:hover {{ transform: translateY(-5px); box-shadow: 0 8px 25px rgba(41, 54, 129, 0.1); }}
     .c-badge {{ display: inline-block; font-weight: 800; font-size: 12px; padding: 6px 12px; border-radius: 20px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }}
     .c-title {{ font-size: 18px; font-weight: 800; color: {C_TEXT_DARK}; margin-bottom: 12px; }}
@@ -52,9 +52,9 @@ st.markdown(f"""
     .c-out {{ font-size: 13px; font-weight: 700; color: {C_MAIN_BLUE}; background: {C_GRAY}; padding: 10px; border-radius: 6px; }}
 
     /* 3. Executive Decision Framework */
-    .fw-container {{ display: flex; background: {C_WHITE}; border-radius: 16px; box-shadow: 0 6px 20px rgba(41, 54, 129, 0.06); margin-bottom: 50px; overflow: hidden; border: 1px solid {C_LIGHT_BLUE}; }}
-    .fw-left {{ flex: 1; padding: 40px; border-right: 1px solid {C_LIGHT_BLUE}; display: flex; flex-direction: column; align-items: center; background: {C_GRAY}; }}
-    .fw-right {{ flex: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; }}
+    .fw-container {{ display: flex; background: {C_WHITE}; border-radius: 16px; box-shadow: 0 6px 20px rgba(41, 54, 129, 0.06); margin-bottom: 50px; overflow: hidden; border: 1px solid {C_LIGHT_BLUE}; flex-wrap: wrap; }}
+    .fw-left {{ flex: 1; min-width: 300px; padding: 40px; border-right: 1px solid {C_LIGHT_BLUE}; display: flex; flex-direction: column; align-items: center; background: {C_GRAY}; }}
+    .fw-right {{ flex: 1; min-width: 300px; padding: 40px; display: flex; flex-direction: column; align-items: center; }}
     
     .fw-block-title {{ font-size: 12px; font-weight: 800; color: {C_TEXT_DARK}; opacity: 0.5; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }}
     .fw-input-box {{ display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }}
@@ -95,28 +95,50 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. TẢI DỮ LIỆU TẬP TRUNG CHO TRA CỨU NHANH
+# 3. TẢI DỮ LIỆU THỰC TẾ TỪ FILE CSV
 # ==============================================================================
 @st.cache_data
-def load_quick_lookup_data():
-    occs = [
-        ("Accountants", "Finance & Accounting", "High", "High", "Reskill Workforce", "Train employees before automation"),
-        ("Customer Service", "Customer Service", "High", "Medium", "Deploy AI Agent", "Implement AI support system"),
-        ("Financial Analysts", "Finance & Accounting", "High", "Low", "AI Copilot", "Augment analytical capability"),
-        ("Software Developers", "IT", "Medium", "Low", "Human-AI Collaboration", "Improve productivity with coding assistant"),
-        ("General Managers", "Management", "Low", "Low", "Human-led", "Duy trì vai trò cốt lõi của con người"),
-        ("Retail Salespersons", "Sales & Retail", "Medium", "High", "Reskill Workforce", "Lộ trình chuyển đổi kỹ năng giao tiếp"),
-        ("Registered Nurses", "Healthcare", "Low", "Low", "Human-led", "Hỗ trợ tác vụ phụ, giữ nhân sự y tế")
-    ]
-    return pd.DataFrame(occs, columns=["Occupation", "Industry", "AI Priority", "Transformation Risk", "Recommended Strategy", "Executive Action"])
+def load_real_data():
+    try:
+        # Đọc dữ liệu từ file csv thực tế
+        df = pd.read_csv(r"C:\Users\HP\Downloads\final_consolidated_output (1).csv")
+        
+        df_display = df[[
+            "Occupation (O*NET-SOC Title)", 
+            "Industry Group", 
+            "Cap_norm", 
+            "Read_norm", 
+            "Quadrant", 
+            "Transformation_Strategy"
+        ]].copy()
+        
+        df_display = df_display.rename(columns={
+            "Occupation (O*NET-SOC Title)": "Nghề nghiệp",
+            "Industry Group": "Ngành nghề",
+            "Quadrant": "Phân khúc Chiến lược (Quadrant)",
+            "Transformation_Strategy": "Hành động Quản trị"
+        })
+        
+        # GIỮ NGUYÊN ĐỊNH DẠNG SỐ (FLOAT) ĐỂ LÀM GRADIENT MÀU
+        df_display["Năng lực AI chuẩn hóa (Norm)"] = df_display["Cap_norm"].astype(float)
+        df_display["Sẵn sàng Nhân sự (Norm)"] = df_display["Read_norm"].astype(float)
+        
+        df_display = df_display[[
+            "Nghề nghiệp", "Ngành nghề", "Năng lực AI chuẩn hóa (Norm)", "Sẵn sàng Nhân sự (Norm)", "Phân khúc Chiến lược (Quadrant)", "Hành động Quản trị"
+        ]]
+        
+        return df_display
+    except Exception as e:
+        st.error(f"Không thể tải dữ liệu từ file. Lỗi: {e}")
+        return pd.DataFrame(columns=["Nghề nghiệp", "Ngành nghề", "Năng lực AI chuẩn hóa (Norm)", "Sẵn sàng Nhân sự (Norm)", "Phân khúc Chiến lược (Quadrant)", "Hành động Quản trị"])
 
-df_lookup = load_quick_lookup_data()
+df_lookup = load_real_data()
 
 # ==============================================================================
 # 4. NAVIGATION SIDEBAR
 # ==============================================================================
 try:
-    st.sidebar.image("data/images.png", use_container_width=True)
+    st.sidebar.image(r"C:\Users\HP\Downloads\images.png", use_container_width=True)
 except:
     st.sidebar.markdown(f"<h2 style='color:{C_MAIN_BLUE}; text-align:center;'>HUB LOGO</h2>", unsafe_allow_html=True)
 
@@ -134,51 +156,80 @@ st.sidebar.info("Hãy chọn các trang **`overview`**, **`scenario`**, **`econo
 st.sidebar.markdown("---")
 st.sidebar.caption("Đồ án cuối kỳ - Môn Trực Quan Hoá Dữ Liệu")
 st.sidebar.caption("Trường Đại học Ngân hàng TP. Hồ Chí Minh (HUB)")
-st.sidebar.caption("© 2026 AI Transformation Framework")
+st.sidebar.caption("© 2026 Khung Chuyển đổi AI (AI Transformation Framework)")
 
 # ==============================================================================
-# PAGE 1: EXECUTIVE DECISION SUPPORT PLATFORM (TRANG TỔNG)
+# PAGE 1: NỀN TẢNG HỖ TRỢ QUYẾT ĐỊNH QUẢN TRỊ (TRANG TỔNG)
 # ==============================================================================
 
 # --- 1. HERO HEADER ---
-st.markdown(f"""<div class="hero-banner"><h1>AI Transformation Strategy Platform</h1><h3>Decision Intelligence Framework for Identifying AI Investment Priorities, Workforce Transition Risks, and Transformation Roadmaps in Vietnam</h3><p>Khung hỗ trợ ra quyết định giúp doanh nghiệp xác định nơi nên đầu tư AI, đánh giá rủi ro chuyển đổi nhân sự và xây dựng lộ trình thích ứng.</p></div>""", unsafe_allow_html=True)
+st.markdown(f"""<div class="hero-banner"><h1>Nền tảng Chiến lược Chuyển đổi AI</h1><h3>Khung Khuyến nghị Quyết định nhằm Xác định Ưu tiên Đầu tư AI, Rủi ro Chuyển đổi Nhân lực và Lộ trình Thích ứng tại Việt Nam</h3><p>Khung hỗ trợ ra quyết định giúp doanh nghiệp xác định nơi nên đầu tư AI, đánh giá rủi ro chuyển đổi nhân sự và xây dựng lộ trình thích ứng.</p></div>""", unsafe_allow_html=True)
 
 # --- 2. STRATEGIC CHALLENGE ---
-st.markdown(f"""<div class="sec-title">🎯 Strategic Challenge</div><div class="sec-subtitle">Làm thế nào để xây dựng một Decision Support Framework giúp doanh nghiệp Việt Nam xác định thứ tự ưu tiên đầu tư AI và lựa chọn chiến lược chuyển đổi lực lượng lao động phù hợp cho từng nhóm nghề?</div><div class="challenge-grid"><div class="c-card" style="border-top-color: {C_ACCENT};"><div class="c-badge" style="background: {C_ACCENT_BG}; color: {C_ACCENT};">Q1 — WHERE TO INVEST?</div><div class="c-title">AI Investment Prioritization</div><div class="c-q">Which occupations and business areas should receive AI investment first to maximize economic value?</div><div class="c-out">Output: → Dashboard 2<br>AI Investment & Workforce Strategy</div></div><div class="c-card" style="border-top-color: {C_MAIN_BLUE};"><div class="c-badge" style="background: rgba(66,116,217,0.1); color: {C_MAIN_BLUE};">Q2 — WHAT WILL BE IMPACTED?</div><div class="c-title">Workforce Impact Assessment</div><div class="c-q">Which industries and occupations are most exposed to AI-driven transformation?</div><div class="c-out" style="color: {C_MAIN_BLUE};">Output: → Dashboard 1<br>Market Exposure Analysis</div></div><div class="c-card" style="border-top-color: {C_DARK_BLUE};"><div class="c-badge" style="background: rgba(41,54,129,0.1); color: {C_DARK_BLUE};">Q3 — HOW TO TRANSFORM?</div><div class="c-title">Transformation Roadmap</div><div class="c-q">How should organizations prepare workforce, infrastructure, and policies for AI adoption?</div><div class="c-out" style="color: {C_DARK_BLUE};">Output: → Dashboard 3<br>Vietnam AI Transformation Simulator</div></div></div>""", unsafe_allow_html=True)
+st.markdown(f"""<div class="sec-title">🎯 Thách thức Chiến lược</div><div class="sec-subtitle">Làm thế nào để xây dựng một Khung Hỗ trợ Quyết định giúp doanh nghiệp Việt Nam xác định thứ tự ưu tiên đầu tư AI và lựa chọn chiến lược chuyển đổi lực lượng lao động phù hợp cho từng nhóm nghề?</div><div class="challenge-grid"><div class="c-card" style="border-top-color: {C_ACCENT};"><div class="c-badge" style="background: {C_ACCENT_BG}; color: {C_ACCENT};">Câu hỏi 1 — ĐẦU TƯ VÀO ĐÂU?</div><div class="c-title">Ưu tiên Đầu tư AI</div><div class="c-q">Những ngành nghề và lĩnh vực kinh doanh nào nên được ưu tiên đầu tư AI để tối đa hóa giá trị kinh tế?</div><div class="c-out">Đầu ra: → Dashboard 2<br>Chiến lược Đầu tư AI & Nhân sự</div></div><div class="c-card" style="border-top-color: {C_MAIN_BLUE};"><div class="c-badge" style="background: rgba(66,116,217,0.1); color: {C_MAIN_BLUE};">Câu hỏi 2 — ĐỐI TƯỢNG BỊ TÁC ĐỘNG?</div><div class="c-title">Đánh giá Tác động Nhân lực</div><div class="c-q">Những ngành nghề và lĩnh vực nào chịu rủi ro cao nhất từ quá trình chuyển đổi AI?</div><div class="c-out" style="color: {C_MAIN_BLUE};">Đầu ra: → Dashboard 1<br>Phân tích Rủi ro Thị trường (Market Exposure)</div></div><div class="c-card" style="border-top-color: {C_DARK_BLUE};"><div class="c-badge" style="background: rgba(41,54,129,0.1); color: {C_DARK_BLUE};">Câu hỏi 3 — CHUYỂN ĐỔI NHƯ THẾ NÀO?</div><div class="c-title">Lộ trình Chuyển đổi</div><div class="c-q">Tổ chức nên chuẩn bị nguồn nhân lực, hạ tầng và chính sách như thế nào để ứng dụng AI?</div><div class="c-out" style="color: {C_DARK_BLUE};">Đầu ra: → Dashboard 3<br>Mô phỏng Chuyển đổi AI tại Việt Nam</div></div></div>""", unsafe_allow_html=True)
 
 # --- 3. EXECUTIVE DECISION FRAMEWORK ---
-st.markdown("""<div class="sec-title">🧭 Executive Decision Framework</div><div class="sec-subtitle">The logical architecture translating workforce data into strategic recommendations.</div><div class="fw-container"><div class="fw-left"><div class="fw-block-title">INPUT</div><div class="fw-input-box"><div class="fw-item">AI Capability</div><div class="fw-plus">+</div><div class="fw-item">Economic Exposure</div><div class="fw-plus">+</div><div class="fw-item">Worker Readiness</div></div><div class="fw-arrow">↓</div><div class="fw-engine">⚙️ AI Transformation Decision Engine</div><div class="fw-arrow">↓</div><div class="fw-block-title">STRATEGIC ACTION</div><div class="fw-action-grid"><div class="act-tag a1">Deploy AI</div><div class="act-tag a2">Reskill Workforce</div><div class="act-tag a3">Human-AI Collaboration</div><div class="act-tag a4">Human-led</div></div></div><div class="fw-right"><div class="fw-block-title">BUSINESS QUESTION</div><div class="fw-arrow" style="margin-top:0;">↓</div><div class="fw-step"><div class="fw-step-title">1. IMPACT ASSESSMENT</div><div class="fw-step-q">Where is AI changing?</div></div><div class="fw-arrow">↓</div><div class="fw-step"><div class="fw-step-title">2. PRIORITIZATION</div><div class="fw-step-q">Where should invest?</div></div><div class="fw-arrow">↓</div><div class="fw-step"><div class="fw-step-title">3. TRANSFORMATION</div><div class="fw-step-q">How should adapt?</div></div></div></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="sec-title">🧭 Khung Quyết định Quản trị (Executive Framework)</div><div class="sec-subtitle">Cấu trúc logic chuyển hóa dữ liệu nhân lực thành các đề xuất chiến lược.</div><div class="fw-container"><div class="fw-left"><div class="fw-block-title">ĐẦU VÀO (INPUT)</div><div class="fw-input-box"><div class="fw-item">Năng lực AI</div><div class="fw-plus">+</div><div class="fw-item">Rủi ro Kinh tế</div><div class="fw-plus">+</div><div class="fw-item">Độ sẵn sàng Nhân sự</div></div><div class="fw-arrow">↓</div><div class="fw-engine">⚙️ Cỗ máy Quyết định Chuyển đổi AI</div><div class="fw-arrow">↓</div><div class="fw-block-title">HÀNH ĐỘNG CHIẾN LƯỢC</div><div class="fw-action-grid"><div class="act-tag a1">Triển khai AI</div><div class="act-tag a2">Đào tạo lại (Reskill)</div><div class="act-tag a3">Cộng tác Người-AI</div><div class="act-tag a4">Con người Dẫn dắt</div></div></div><div class="fw-right"><div class="fw-block-title">CÂU HỎI NGHIỆP VỤ</div><div class="fw-arrow" style="margin-top:0;">↓</div><div class="fw-step"><div class="fw-step-title">1. ĐÁNH GIÁ TÁC ĐỘNG</div><div class="fw-step-q">AI đang thay đổi ở đâu?</div></div><div class="fw-arrow">↓</div><div class="fw-step"><div class="fw-step-title">2. XÁC ĐỊNH ƯU TIÊN</div><div class="fw-step-q">Nên đầu tư vào đâu?</div></div><div class="fw-arrow">↓</div><div class="fw-step"><div class="fw-step-title">3. LỘ TRÌNH CHUYỂN ĐỔI</div><div class="fw-step-q">Cần thích ứng thế nào?</div></div></div></div>""", unsafe_allow_html=True)
 
 # --- 4. EXECUTIVE DECISION JOURNEY ---
-st.markdown("""<div class="sec-title">🚀 Executive Decision Journey</div><div class="sec-subtitle">Three analytical layers converting workforce data into strategic AI actions.</div>""", unsafe_allow_html=True)
+st.markdown("""<div class="sec-title">🚀 Hành trình Ra quyết định Quản trị</div><div class="sec-subtitle">Ba tầng phân tích chuyển hóa dữ liệu nhân lực thành hành động chiến lược AI.</div>""", unsafe_allow_html=True)
     
 col1, col2, col3 = st.columns(3)
     
 with col1:
-    st.markdown(f"""<div class="journey-card"><div class="j-step" style="color: {C_MAIN_BLUE};">STEP 1</div><div class="j-title">Diagnose Current AI Exposure</div><div class="j-q-box" style="border-left-color: {C_MAIN_BLUE};"><div class="j-q-label">Question</div><div class="j-q-text">Where will AI create the greatest disruption?</div></div><div class="j-out-label">Core Outputs</div><ul class="j-out-list"><li>AI Exposure Score</li><li>Workforce Vulnerability Map</li><li>Industry Impact Landscape</li></ul></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="journey-card"><div class="j-step" style="color: {C_MAIN_BLUE};">BƯỚC 1</div><div class="j-title">Chẩn đoán Mức độ Phơi nhiễm AI Hiện tại</div><div class="j-q-box" style="border-left-color: {C_MAIN_BLUE};"><div class="j-q-label">Câu hỏi</div><div class="j-q-text">AI sẽ tạo ra sự gián đoạn lớn nhất ở đâu?</div></div><div class="j-out-label">Đầu ra Cốt lõi</div><ul class="j-out-list"><li>Điểm Phơi nhiễm AI (AI Exposure Score)</li><li>Bản đồ Rủi ro Nhân sự (Vulnerability Map)</li><li>Bức tranh Tác động Ngành</li></ul></div>""", unsafe_allow_html=True)
 
 with col2:
-    st.markdown(f"""<div class="journey-card"><div class="j-step" style="color: {C_DARK_BLUE};">STEP 2</div><div class="j-title">Prioritize AI Investment</div><div class="j-q-box" style="border-left-color: {C_DARK_BLUE};"><div class="j-q-label">Question</div><div class="j-q-text">Where should organizations allocate AI resources first?</div></div><div class="j-out-label">Core Outputs</div><ul class="j-out-list"><li>AI Prioritization Score (AIPS)</li><li>Economic Opportunity Ranking</li><li>Workforce Strategy Matrix</li></ul></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="journey-card"><div class="j-step" style="color: {C_DARK_BLUE};">BƯỚC 2</div><div class="j-title">Ưu tiên Đầu tư AI</div><div class="j-q-box" style="border-left-color: {C_DARK_BLUE};"><div class="j-q-label">Câu hỏi</div><div class="j-q-text">Tổ chức nên phân bổ nguồn lực AI vào đâu đầu tiên?</div></div><div class="j-out-label">Đầu ra Cốt lõi</div><ul class="j-out-list"><li>Điểm Ưu tiên AI (AIPS)</li><li>Xếp hạng Cơ hội Kinh tế</li><li>Ma trận Chiến lược Nhân sự</li></ul></div>""", unsafe_allow_html=True)
 
 with col3:
-    st.markdown(f"""<div class="journey-card"><div class="j-step" style="color: {C_ACCENT};">STEP 3</div><div class="j-title">Simulate Future Transformation</div><div class="j-q-box" style="border-left-color: {C_ACCENT};"><div class="j-q-label">Question</div><div class="j-q-text">How will Vietnam's workforce evolve under different AI scenarios?</div></div><div class="j-out-label">Core Outputs</div><ul class="j-out-list"><li>Technology Adoption Scenario</li><li>Workforce Transition Path</li><li>2026–2030 Transformation Roadmap</li></ul></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="journey-card"><div class="j-step" style="color: {C_ACCENT};">BƯỚC 3</div><div class="j-title">Mô phỏng Chuyển đổi Tương lai</div><div class="j-q-box" style="border-left-color: {C_ACCENT};"><div class="j-q-label">Câu hỏi</div><div class="j-q-text">Lực lượng lao động Việt Nam sẽ tiến hóa thế nào dưới các kịch bản AI khác nhau?</div></div><div class="j-out-label">Đầu ra Cốt lõi</div><ul class="j-out-list"><li>Kịch bản Ứng dụng Công nghệ</li><li>Lộ trình Dịch chuyển Nhân sự</li><li>Lộ trình Chuyển đổi 2026–2030</li></ul></div>""", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # --- 5. EXECUTIVE QUICK LOOKUP ENGINE ---
-st.markdown("""<div class="sec-title">🔎 Executive Quick Lookup Engine</div><div class="sec-subtitle">A cross-dashboard recommendation layer allowing executives to quickly identify recommended AI strategies by occupation.</div>""", unsafe_allow_html=True)
+st.markdown("""<div class="sec-title">🔎 Công cụ Tra cứu Nhanh cho Quản lý</div><div class="sec-subtitle">Lớp khuyến nghị liên thông giúp các nhà quản lý nhanh chóng xác định chiến lược AI phù hợp theo từng nhóm ngành nghề.</div>""", unsafe_allow_html=True)
     
 search_col1, search_col2 = st.columns([3, 7])
 with search_col1:
-    selected_ind = st.selectbox("Select Industry Filter:", ["All Industries"] + list(df_lookup["Industry"].unique()))
+    # Lấy danh sách ngành nghề độc nhất, xử lý các giá trị rỗng/NaN nếu có
+    unique_industries = sorted([str(x) for x in df_lookup["Ngành nghề"].unique() if pd.notna(x)])
+    selected_ind = st.selectbox("Chọn bộ lọc Ngành nghề:", ["Tất cả các ngành"] + unique_industries)
     
-filtered_lookup = df_lookup if selected_ind == "All Industries" else df_lookup[df_lookup["Industry"] == selected_ind]
+filtered_lookup = df_lookup if selected_ind == "Tất cả các ngành" else df_lookup[df_lookup["Ngành nghề"].astype(str) == selected_ind]
+
+# Hàm tô màu riêng cho cột Phân khúc Chiến lược (Quadrant)
+def color_quadrants(val):
+    if pd.isna(val): return ''
+    val_str = str(val).upper()
+    if 'Q1' in val_str: 
+        return 'background-color: #e0f2fe; color: #0284c7; font-weight: 700;' # Xanh nhạt
+    elif 'Q2' in val_str: 
+        return 'background-color: #fee2e2; color: #b91c1c; font-weight: 700;' # Đỏ nhạt
+    elif 'Q3' in val_str: 
+        return 'background-color: #fef9c3; color: #a16207; font-weight: 700;' # Vàng nhạt
+    elif 'Q4' in val_str: 
+        return 'background-color: #f3f4f6; color: #374151; font-weight: 700;' # Xám nhạt
+    return ''
+
+# Dùng .map() (hoặc .applymap() với pandas cũ) để tô màu
+styled_df = (
+    filtered_lookup.style
+    .map(color_quadrants, subset=["Phân khúc Chiến lược (Quadrant)"])
+    .background_gradient(cmap="Blues", subset=["Năng lực AI chuẩn hóa (Norm)"]) # Màu gradient xanh
+    .background_gradient(cmap="Purples", subset=["Sẵn sàng Nhân sự (Norm)"]) # Màu gradient tím
+    .format({
+        "Năng lực AI chuẩn hóa (Norm)": "{:.2f}", 
+        "Sẵn sàng Nhân sự (Norm)": "{:.2f}"
+    })
+)
 
 st.dataframe(
-    filtered_lookup.style.set_properties(**{'background-color': C_WHITE, 'color': C_TEXT_DARK}),
+    styled_df,
     use_container_width=True,
-    hide_index=True
+    hide_index=True,
+    height=400
 )
 
 # --- 6. STRATEGIC IMPLICATIONS ---
-st.markdown("""<div class="impl-box"><div class="impl-title">💡 Strategic Implications</div><div class="impl-text">AI transformation is not only a technology adoption problem. The major challenge is aligning:<ul><li>AI capability</li><li>Economic value creation</li><li>Workforce readiness</li></ul><span class="impl-highlight">Successful organizations should prioritize AI investment where economic impact is high while simultaneously preparing employees for workforce transition.</span></div></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="impl-box"><div class="impl-title">💡 Ý nghĩa Chiến lược</div><div class="impl-text">Chuyển đổi AI không chỉ là bài toán ứng dụng công nghệ. Thách thức lớn nhất nằm ở việc tinh chỉnh đồng bộ:<ul><li>Năng lực AI (AI Capability)</li><li>Tạo ra giá trị kinh tế (Economic Value Creation)</li><li>Mức độ sẵn sàng của lực lượng lao động (Workforce Readiness)</li></ul><span class="impl-highlight">Các tổ chức thành công cần ưu tiên đầu tư AI vào những nơi mang lại tác động kinh tế cao, đồng thời chủ động chuẩn bị cho nhân viên lộ trình thích nghi và chuyển đổi.</span></div></div>""", unsafe_allow_html=True)
