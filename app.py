@@ -101,7 +101,7 @@ st.markdown(f"""
 def load_real_data():
     try:
         # Đọc dữ liệu từ file csv thực tế
-        df = pd.read_csv(r"C:\Users\HP\Downloads\final_consolidated_output (1).csv")
+        df = pd.read_csv("data/final_consolidated_output (1).csv")
         
         df_display = df[[
             "Occupation (O*NET-SOC Title)", 
