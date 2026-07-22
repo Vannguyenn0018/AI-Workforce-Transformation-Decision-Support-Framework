@@ -210,7 +210,7 @@ with col3:
 # ==============================================================================
 # 6. SIDEBAR
 # ==============================================================================
-st.image("Data/raw/logo-dai-hoc-ngan-hang.jpg", use_container_width=True) # Placeholder Logo BUH
+st.image("data/images.png", use_container_width=True) # Placeholder Logo BUH
 st.markdown("---")
 st.header("Thông tin nhóm thực hiện")
 st.markdown("**Nhóm trưởng:** Nguyễn Thái Thanh Vân")
