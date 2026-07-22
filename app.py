@@ -210,9 +210,17 @@ with col3:
 # ==============================================================================
 # 6. SIDEBAR
 # ==============================================================================
+st.image("Data/raw/logo-dai-hoc-ngan-hang.jpg", use_container_width=True) # Placeholder Logo BUH
+st.markdown("---")
+st.header("Thông tin nhóm thực hiện")
+st.markdown("**Nhóm trưởng:** Nguyễn Thái Thanh Vân")
+st.markdown("Nguyễn Thị Phương Uyên")
+st.markdown("Phạm Thanh Tuyền")
+st.markdown("Nguyễn Huy Gia Toàn")
 st.sidebar.markdown(f"<h2 style='color:{C_DARK_BLUE}; font-size:18px;'>📍 Điều Hướng Hệ Thống</h2>", unsafe_allow_html=True)
-st.sidebar.info("👉 Hãy chọn các trang **`overview`**, **`scenario`** **`economy`** ở menu bên trên góc trái thanh Sidebar để bắt đầu điều khiển Dashboard!")
+st.sidebar.info("Hãy chọn các trang **`overview`**, **`scenario`**, **`economy`** ở menu bên trên góc trái thanh Sidebar để bắt đầu điều khiển Dashboard!")
 
 st.sidebar.markdown("---")
+st.sidebar.caption("Đồ án cuối kỳ - Môn Trực Quan Hoá Dữ Liệu")
 st.sidebar.caption("Trường Đại học Ngân hàng TP. Hồ Chí Minh (HUB)")
 st.sidebar.caption("© 2026 AI Transformation Framework")
