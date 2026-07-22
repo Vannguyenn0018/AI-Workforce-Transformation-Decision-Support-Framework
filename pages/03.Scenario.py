@@ -140,7 +140,7 @@ st.markdown(f"""
 @st.cache_data
 def load_base_data():
     # Đọc file dữ liệu đã hợp nhất của bạn
-    df = pd.read_csv(r"C:\Users\HP\Downloads\final_consolidated_output (1).csv")
+    df = pd.read_csv("data/final_consolidated_output (1).csv")
     
     # Đổi tên các cột tương ứng với logic Simulation Engine bên dưới
     df = df.rename(columns={
