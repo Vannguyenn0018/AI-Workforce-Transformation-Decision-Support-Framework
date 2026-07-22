@@ -100,7 +100,7 @@ st.markdown(f"""
 def load_data():
     try:
         # Đọc dữ liệu trực tiếp từ file (vui lòng đảm bảo file chung thư mục với script)
-        df = pd.read_csv(r"C:\Users\HP\Downloads\final_consolidated_output (1).csv", encoding="utf-8")
+        df = pd.read_csv("data/final_consolidated_output (1).csv", encoding="utf-8")
         
         # 1. Mapping tên cột từ file sang format của source code
         rename_columns = {
