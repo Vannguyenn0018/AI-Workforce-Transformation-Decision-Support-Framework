@@ -210,13 +210,13 @@ with col3:
 # ==============================================================================
 # 6. SIDEBAR
 # ==============================================================================
-st.image("data/images.png", use_container_width=True) # Placeholder Logo BUH
-st.markdown("---")
-st.header("Thông tin nhóm thực hiện")
-st.markdown("**Nhóm trưởng:** Nguyễn Thái Thanh Vân")
-st.markdown("Nguyễn Thị Phương Uyên")
-st.markdown("Phạm Thanh Tuyền")
-st.markdown("Nguyễn Huy Gia Toàn")
+st.sidebar.image("data/images.png", use_container_width=True) # Placeholder Logo BUH
+st.sidebar.markdown("---")
+st.sidebar.header("Thông tin nhóm thực hiện")
+st.sidebar.markdown("**Nhóm trưởng:** Nguyễn Thái Thanh Vân")
+st.sidebar.markdown("Nguyễn Thị Phương Uyên")
+st.sidebar.markdown("Phạm Thanh Tuyền")
+st.sidebar.markdown("Nguyễn Huy Gia Toàn")
 st.sidebar.markdown(f"<h2 style='color:{C_DARK_BLUE}; font-size:18px;'>📍 Điều Hướng Hệ Thống</h2>", unsafe_allow_html=True)
 st.sidebar.info("Hãy chọn các trang **`overview`**, **`scenario`**, **`economy`** ở menu bên trên góc trái thanh Sidebar để bắt đầu điều khiển Dashboard!")
 
