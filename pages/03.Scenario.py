@@ -190,37 +190,66 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# SIDEBAR: SCENARIO PARAMETERS CONTROL
+# SIDEBAR: SCENARIO PARAMETERS CONTROL (FIX TRỢ TỈNH TRẠNG KÉO/BẤM)
 # ==============================================================================
 st.sidebar.markdown(f"<h2 style='color:{C_DARK_BLUE}; font-size:18px;'>🎛️ Bảng Điều Chỉnh Kịch Bản</h2>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
 
-# Chọn kịch bản nhanh
+# 1. Khởi tạo giá trị mặc định cho kịch bản nếu chưa có
+if "preset_choice" not in st.session_state:
+    st.session_state.preset_choice = "Tùy Chỉnh (Custom)"
+if "tr_val" not in st.session_state:
+    st.session_state.tr_val = 0.70
+if "pr_val" not in st.session_state:
+    st.session_state.pr_val = 0.60
+if "ir_val" not in st.session_state:
+    st.session_state.ir_val = 0.65
+
+# 2. Radio chọn kịch bản mẫu
 preset = st.sidebar.radio(
     "📌 Chọn Kịch Bản Mẫu:",
-    ["Tùy Chỉnh (Custom)", "Conservative (Thận trọng)", "Expected (Kỳ vọng 2028)", "Optimistic (Bứt phá 2030)"]
+    ["Tùy Chỉnh (Custom)", "Conservative (Thận trọng)", "Expected (Kỳ vọng 2028)", "Optimistic (Bứt phá 2030)"],
+    key="preset_choice"
 )
 
-if preset == "Conservative (Thận trọng)":
-    default_tr, default_pr, default_ir = 0.50, 0.45, 0.50
-elif preset == "Expected (Kỳ vọng 2028)":
-    default_tr, default_pr, default_ir = 0.75, 0.70, 0.65
-elif preset == "Optimistic (Bứt phá 2030)":
-    default_tr, default_pr, default_ir = 0.95, 0.90, 0.85
-else:
-    default_tr, default_pr, default_ir = 0.70, 0.60, 0.65
+# 3. Khi người dùng click chọn kịch bản mẫu, ta cập nhật lại giá trị và QUAN TRỌNG LÀ XÓA KEY CỦA SLIDER 
+# để Streamlit bắt buộc phải vẽ lại slider với giá trị mới.
+if preset != "Tùy Chỉnh (Custom)":
+    if preset == "Conservative (Thận trọng)":
+        new_tr, new_pr, new_ir = 0.50, 0.45, 0.50
+    elif preset == "Expected (Kỳ vọng 2028)":
+        new_tr, new_pr, new_ir = 0.75, 0.70, 0.65
+    elif preset == "Optimistic (Bứt phá 2030)":
+        new_tr, new_pr, new_ir = 0.95, 0.90, 0.85
+    
+    # Chỉ cập nhật nếu giá trị thay đổi để tránh lặp vô tận
+    if st.session_state.tr_val != new_tr:
+        st.session_state.tr_val = new_tr
+        st.session_state.pr_val = new_pr
+        st.session_state.ir_val = new_ir
+        
+        # Xóa các key của slider đi để Streamlit không bị khóa cứng trạng thái cũ
+        for k in ["tr_slider", "pr_slider", "ir_slider"]:
+            if k in st.session_state:
+                del st.session_state[k]
+        st.rerun()
 
 st.sidebar.markdown("### 1. Technology Readiness (TR)")
 st.sidebar.caption("Cloud, Data Infrastructure & AI Platform tại VN")
-tr_val = st.sidebar.slider("Chỉ số TR", 0.0, 1.0, default_tr, 0.05, key="tr_slider")
+tr_val = st.sidebar.slider("Chỉ số TR", 0.0, 1.0, value=st.session_state.tr_val, step=0.05, key="tr_slider")
 
 st.sidebar.markdown("### 2. People Readiness (PR)")
 st.sidebar.caption("Digital Skill, AI Literacy & Độ chấp nhận của lao động")
-pr_val = st.sidebar.slider("Chỉ số PR", 0.0, 1.0, default_pr, 0.05, key="pr_slider")
+pr_val = st.sidebar.slider("Chỉ số PR", 0.0, 1.0, value=st.session_state.pr_val, step=0.05, key="pr_slider")
 
 st.sidebar.markdown("### 3. Institutional Readiness (IR)")
 st.sidebar.caption("Khung pháp lý, Quản trị dữ liệu & Bảo mật thông tin")
-ir_val = st.sidebar.slider("Chỉ số IR", 0.0, 1.0, default_ir, 0.05, key="ir_slider")
+ir_val = st.sidebar.slider("Chỉ số IR", 0.0, 1.0, value=st.session_state.ir_val, step=0.05, key="ir_slider")
+
+# Cập nhật ngược lại vào session_state để các phần khác trong app đọc được giá trị mới nhất
+st.session_state.tr_val = tr_val
+st.session_state.pr_val = pr_val
+st.session_state.ir_val = ir_val
 
 
 # ==============================================================================
